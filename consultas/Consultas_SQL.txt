@@ -1,0 +1,102 @@
+1)
+
+CREATE OR REPLACE FUNCTION obtener_entradas_usuario(p_usuario_id INT)
+RETURNS TABLE(
+    usuario_id INT,
+    nombre_usuario VARCHAR,
+    apellido_usuario VARCHAR,
+    total_entradas BIGINT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT u.id AS usuario_id, u.nombre, u.apellido,
+           COUNT(e.numero) AS total_entradas
+    FROM public.entrada e
+    INNER JOIN public.funcion f ON e.funcion_id = f.id
+    INNER JOIN public.usuario u ON e.fk_usuario_id = u.id
+    WHERE u.id = p_usuario_id
+      AND EXTRACT(YEAR FROM f.fecha) = EXTRACT(YEAR FROM CURRENT_DATE)
+    GROUP BY u.id, u.nombre, u.apellido;
+END;
+$$ LANGUAGE plpgsql;
+
+2)
+
+CREATE TABLE historial_cambios_saldo (
+    id SERIAL PRIMARY KEY,
+    usuario_id INT,
+    fecha_modificacion TIMESTAMP,
+    nuevo_saldo DECIMAL,
+    saldo_anterior DECIMAL
+);
+
+CREATE FUNCTION registro_cambio_saldo()
+RETURNS TRIGGER AS
+$$
+BEGIN
+	INSERT INTO historial_cambios_saldo(usuario_id,fecha_modificacion,nuevo_saldo,saldo_anterior)
+	VALUES (NEW.id,CURRENT_TIMESTAMP,NEW.saldo,OLD.saldo);
+	RETURN NEW;
+END;
+$$
+
+LANGUAGE plpgsql;
+
+CREATE TRIGGER cambio_saldo_trigger
+after UPDATE OF saldo ON usuario
+FOR EACH ROW
+WHEN (NEW.saldo IS DISTINCT FROM OLD.saldo)
+EXECUTE FUNCTION registro_cambio_saldo()
+
+3)
+
+CREATE OR REPLACE FUNCTION obtener_usuarios_con_mas_de_n_entradas(n INT)
+RETURNS TABLE (
+    id_usuario INT,
+    nombre VARCHAR,
+    numero_entradas BIGINT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT u.id, u.nombre, COUNT(e.id) AS numero_entradas
+    FROM public.usuario u
+    JOIN public.entrada e ON e.fk_usuario_id = u.id
+    GROUP BY u.id, u.nombre
+    HAVING COUNT(e.id) > n;
+END;
+$$;
+
+SELECT * FROM obtener_usuarios_con_mas_de_n_entradas(0)
+
+4)
+ALTER TABLE estadio
+ALTER COLUMN costo_fijo SET NOT NULL; //AUNQUE NO ESTE CONSTRAINT ESCRITO EXPLICITAMENTE, YA LE ESTOY AGREGANDO LA RESTRICCION (CONSTRAINT) DE ESTA MANERA
+
+ALTER TABLE teatro
+ALTER COLUMN buena_acustica SET NOT NULL; //COSTO FIJO EN TEATRO DEPENDE DE LA BUENA ACUSTICA
+
+
+CREATE TABLE IF NOT EXISTS public.teatro
+(
+    buena_acustica boolean NOT NULL, --NOT NULL ya aplicado, no hace falta poner CONSTRAINT explicitamente
+    id bigint NOT NULL,    	     --CONSTRAINT es una restriccion independiente de si quiero modificarlo desde APP o BD
+    id bigint NOT NULL,
+    CONSTRAINT teatro_pkey PRIMARY KEY (id),
+    CONSTRAINT fks55yd4u98frj78rkviucr5whb FOREIGN KEY (id)
+        REFERENCES public.instalacion (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+
+
+5)
+
+CREATE OR REPLACE VIEW vista_instalaciones_con_varios_shows AS
+SELECT i.nombre AS nombre_instalacion, COUNT(s.instalacion_id) AS cantidad_de_shows
+FROM public.show s
+INNER JOIN public.instalacion i ON s.instalacion_id = i.id
+GROUP BY s.instalacion_id, i.nombre
+HAVING COUNT(s.instalacion_id) >= 2;

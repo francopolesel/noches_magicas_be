@@ -1,0 +1,73 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: noches_magicas_sql
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - db:/var/lib/postgresql/data
+      - ./Docker/init_db.sh:/docker-entrypoint-initdb.d/01_init_db.sh
+
+  #pgadmin:
+  #  image: dpage/pgadmin4
+  #  container_name: pgadmin4_container_politics
+  #  restart: always
+  #  ports:
+  #    - "5050:80"
+  #  environment:
+  #    PGADMIN_DEFAULT_EMAIL: admin@phm.edu.ar
+  #    PGADMIN_DEFAULT_PASSWORD: admin
+  #  volumes:
+  #    - pgadmin-data:/var/lib/pgadmin
+
+  neo4j:
+    image: neo4j:latest
+    restart: unless-stopped
+    ports:
+      - 7474:7474
+      - 7687:7687
+    environment:
+      # Raise memory limits
+      server.memory.pagecache.size: 1G
+      server.memory.heap.max_size: 1G
+      # auth
+      NEO4J_ACCEPT_LICENSE_AGREEMENT: "yes"
+      NEO4J_AUTH: neo4j/s3cr3tn3o
+
+  mongo:
+    # tomamos la última imagen de mongo
+    image: mongo:latest
+    container_name: noches_magicas_nosql
+    hostname: host-mongo-nm
+    ports:
+      - "27020:27017"
+    volumes:
+      - ./Docker/mongo-init.js:/docker-entrypoint-initdb.d/01-mongo-init.js:ro
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: nm
+  redis:
+    container_name: redis-nm
+    hostname: redis
+    image: redis
+    ports:
+      - "6379:6379"
+
+  redis-commander:
+    container_name: redis-commander-nm
+    hostname: redis-commander
+    image: rediscommander/redis-commander:latest
+    restart: always
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+volumes:
+  db:
+  #pgadmin-data:

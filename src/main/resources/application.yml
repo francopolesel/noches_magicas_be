@@ -1,0 +1,47 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://0.0.0.0:5432/noches_magicas
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  main:
+    allow-bean-definition-overriding: true
+
+  jpa:
+    open-in-view: false
+    show-sql: false
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+
+  neo4j:
+    uri: bolt://localhost:7687
+    authentication:
+      username: neo4j
+      password: s3cr3tn3o
+
+#MongoDB sin sharding
+  data:
+    mongodb:
+      host: localhost
+      port: 27020  # El puerto que mapeaste en tu docker-compose.yml
+      database: nm  # El nombre de la base de datos en MongoDB
+      username: admin  # Nombre de usuario de MongoDB
+      password: admin  # Contraseña de MongoDB
+    redis:
+      host: localhost
+      port: 6379
+  #MongoDB con sharding
+  #data:
+  #  mongodb:
+  #    host: localhost
+  #    port: 27117
+  #    database: nm
+  #server:
+  #  error:
+  #    include-message: always
+  #    include-binding-errors: always
+

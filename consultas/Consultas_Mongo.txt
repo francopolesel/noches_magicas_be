@@ -1,0 +1,65 @@
+Punto 1 - Marcelo Sanchez
+db.clickData.aggregate([
+  {
+    $group: {
+      _id: { $toObjectId: "$idShow" },
+      count: { $sum: 1 }
+    }
+  },
+  {
+    $sort: { count: -1 }
+  },
+  {
+    $limit: 1
+  },
+  {
+    $lookup: {
+      from: "shows",
+      localField: "_id",
+      foreignField: "_id",
+      as: "detallesShow"
+    }
+  },
+  {
+    $unwind: "$detallesShow"
+  },
+  {
+    $project: {
+      _id: 0,
+      nombre_show: "$detallesShow.evento",
+      cantidad_clicks: "$count",
+    }
+  }
+])
+
+Punto 2- Gomez Daniel
+db.shows.find({
+"instalacion.tipo": "estadio" })
+
+
+Punto 3 - Juan Texeira
+db.shows.find({
+    "rate": {
+        $gt: 4,
+    }
+})
+
+Punto 4 - Franco Polesel
+db.shows.find({
+    "costoDelShow": {
+        $gte: 1000,
+        $lte: 5000
+    }
+})
+
+Punto 5 - Alan Exarchos
+
+db.shows.find({
+    "funciones": {
+        $elemMatch: {
+            "soldOut": true,
+            "finalizo": false
+        }
+    }
+})
+

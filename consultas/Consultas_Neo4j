@@ -1,0 +1,27 @@
+1) Saber qué usuarios compraron tickets para un determinado show y fecha.
+MATCH (u:Usuario)-[:COMPRO]->(e:Entrada)-[:PARA]->(s:Show)
+WHERE s.id = 'SHOW_ID' AND e.fecha = 'YYYY-MM-DD'
+RETURN u
+
+2) Saber qué usuarios tienen más de 4 tickets.
+MATCH (u:Usuario)-[:ASISTIO_A]->(e:Entrada)
+WITH u, COUNT(e) AS cantidadEntradas
+WHERE cantidadEntradas > 4
+RETURN u
+
+3) Saber una sugerencia de shows que podrían interesar. Son los shows que fueron amigos del usuario con los que compartieron entradas pero el usuario no asistió.
+MATCH (u:Usuario)-[:AMIGO_DE]->(amigo)-[:ASISTIO_A]->(e:Entrada)
+WHERE NOT EXISTS ((u)-[:ASISTIO_A]->(:Entrada {idShow: e.idShow}))
+RETURN e.idShow as ShowsRecomendados
+
+4) Saber qué shows tienen más de 4 reservas.
+MATCH (s:Show)
+WHERE s.suscriptores > 4
+RETURN s
+
+5) Saber qué usuario tiene un ticket con un show que tiene más de 50 tickets.
+MATCH (u:Usuario)-[:ASISTIO_A]->(e:Entrada)
+WITH e.idShow AS showId, COUNT(e) AS entradasCount
+WHERE entradasCount > 50
+MATCH (u:Usuario)-[:ASISTIO_A]->(e:Entrada {idShow: showId})
+RETURN u
